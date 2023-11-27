@@ -121,7 +121,6 @@ gyro_accuracy = gyro_total_correct / gyro_total_samples
 # print(f"GYRO Testing Accuracy: {gyro_accuracy * 100:.2f}%")
 
 
-
 # Extract input (X) and labels (Y) for EEG
 X_eeg_train = eeg_train_data[['EEG.AF3', 'EEG.AF4']].values  # Use only 2 columns as input (2 channels)
 Y_eeg_train = eeg_train_data['Label'].values
@@ -168,31 +167,6 @@ eeg_model.eval()
 eeg_total_correct = 0
 eeg_total_samples = 0
 
-# with torch.no_grad():
-#     for inputs, targets in eeg_test_loader:
-#         outputs = eeg_model(inputs)
-#         predicted_classes = torch.argmax(outputs, dim=1)
-#         print("Shape of targets tensor:", targets.shape)  # Add this line to check the shape
-#         try:
-#             eeg_total_correct += (predicted_classes == targets).sum().item()
-#         except IndexError:
-#             print("IndexError in targets:", targets)
-#             print("Predicted classes:", predicted_classes)
-#             raise
-#         eeg_total_samples += targets.size(0)
-
-
-# # Initialize eeg_total_samples
-# eeg_total_samples = len(Y_eeg_test)
-
-# # Ensure that eeg_total_samples is not zero
-# if eeg_total_samples > 0:
-#     eeg_accuracy = eeg_total_correct / eeg_total_samples
-# else:
-#     eeg_accuracy = 0.0
-
-# end_time = time.time()  # Record end time
-# elapsed_time = end_time - start_time
 
 with torch.no_grad():
     for inputs, targets in eeg_test_loader:
@@ -210,25 +184,6 @@ elapsed_time = end_time - start_time
 gyro_labels = {i: f"Class_{i}" for i in range(len(set(Y_gyro_train)))}
 eeg_labels = {i: f"Class_{i}" for i in range(len(set(Y_eeg_train)))}
 
-# # Predict and print gestures for GYRO
-# gyro_model.eval()
-# with torch.no_grad():
-#     for inputs, _ in gyro_test_loader:
-#         outputs = gyro_model(inputs)
-#         predicted_classes = torch.argmax(outputs, dim=1)
-#         for label in predicted_classes:
-#             gesture = gyro_labels[label.item()]
-#             print(f"Predicted GYRO Gesture: {gesture}")
-
-# # Predict and print gestures for EEG
-# eeg_model.eval()
-# with torch.no_grad():
-#     for inputs, _ in eeg_test_loader:
-#         outputs = eeg_model(inputs)
-#         predicted_classes = torch.argmax(outputs, dim=1)
-#         for label in predicted_classes:
-#             gesture = eeg_labels[label.item()]
-#             print(f"Predicted EEG Gesture: {gesture}")
 
 # Print results
 print(f"GYRO Testing Accuracy: {gyro_accuracy * 100:.2f}%")
