@@ -1,0 +1,186 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import pandas as pd
+from torch.utils.data import TensorDataset, DataLoader
+import time
+
+# Define a simplified CNN model for both GYRO and EEG
+class GestureClassifier(nn.Module):
+    def __init__(self, num_classes, input_channels):
+        super(GestureClassifier, self).__init__()
+        self.input_channels = input_channels
+        self.fc1 = nn.Linear(input_channels, 128)
+        self.relu1 = nn.ReLU()
+        self.fc2 = nn.Linear(128, num_classes)
+
+    def forward(self, x):
+        out = self.fc1(x)
+        out = self.relu1(out)
+        out = self.fc2(out)
+        return out
+
+# Load your training and testing data for GYRO
+gyro_train_data = pd.read_csv('/Users/josiahmccarthy/Documents/SCHOOL/SNR CAP DESIGN/Database_Senior_Project/Final_Split_data[binaryclassification]/FINAL_GYRO_TRAIN[binary].csv')
+gyro_test_data = pd.read_csv('/Users/josiahmccarthy/Documents/SCHOOL/SNR CAP DESIGN/Database_Senior_Project/Final_Split_data[binaryclassification]/FINAL_GYRO_TEST[binary].csv')
+
+# Extract input (X) and labels (Y) for GYRO
+X_gyro_train = gyro_train_data[['MOT.Q0', 'MOT.Q1']].values
+Y_gyro_train = gyro_train_data['Label'].values
+X_gyro_test = gyro_test_data[['MOT.Q0', 'MOT.Q1']].values
+Y_gyro_test = gyro_test_data['Label'].values
+
+# Convert data to PyTorch tensors for GYRO
+X_gyro_train_tensor = torch.tensor(X_gyro_train, dtype=torch.float32)
+Y_gyro_train_tensor = torch.tensor(Y_gyro_train, dtype=torch.long)
+X_gyro_test_tensor = torch.tensor(X_gyro_test, dtype=torch.float32)
+Y_gyro_test_tensor = torch.tensor(Y_gyro_test, dtype=torch.long)
+
+# Create DataLoader for GYRO training and testing data
+gyro_train_data = TensorDataset(X_gyro_train_tensor, Y_gyro_train_tensor)
+gyro_train_loader = DataLoader(gyro_train_data, batch_size=32, shuffle=True)
+gyro_test_data = TensorDataset(X_gyro_test_tensor, Y_gyro_test_tensor)
+gyro_test_loader = DataLoader(gyro_test_data, batch_size=32, shuffle=False)
+
+# Initialize the GYRO model
+gyro_model = GestureClassifier(num_classes=2, input_channels=2)  # Two classes: RIGHT_NOD and LEFT_NOD
+
+# Define loss and optimizer for GYRO
+gyro_criterion = nn.CrossEntropyLoss()
+gyro_optimizer = optim.Adam(gyro_model.parameters(), lr=0.001)
+
+# Define a start_time here before the GYRO training loop begins
+start_time = time.time()  # Record start time
+
+# Training loop for GYRO
+num_epochs = 10
+for epoch in range(num_epochs):
+    gyro_model.train()
+    for inputs, targets in gyro_train_loader:
+        gyro_optimizer.zero_grad()
+        outputs = gyro_model(inputs)
+        loss = gyro_criterion(outputs, targets)
+        loss.backward()
+        gyro_optimizer.step()
+
+# Evaluation loop for GYRO
+gyro_model.eval()
+gyro_total_correct = 0
+gyro_total_samples = 0
+
+with torch.no_grad():
+    for inputs, targets in gyro_test_loader:
+        outputs = gyro_model(inputs)
+        predicted_classes = torch.argmax(outputs, dim=1)
+        gyro_total_correct += (predicted_classes == targets).sum().item()
+        gyro_total_samples += targets.size(0)
+
+# Calculate accuracy for GYRO
+gyro_accuracy = gyro_total_correct / gyro_total_samples
+print(f"GYRO Testing Accuracy: {gyro_accuracy * 100:.2f}%")
+
+# Load your training and testing data for EEG
+eeg_train_data = pd.read_csv('/Users/josiahmccarthy/Documents/SCHOOL/SNR CAP DESIGN/Database_Senior_Project/Split_data/EEG/Training.csv')
+eeg_test_data = pd.read_csv('/Users/josiahmccarthy/Documents/SCHOOL/SNR CAP DESIGN/Database_Senior_Project/Final_Split_data[binaryclassification]/FINAL_EEG_TEST[binary].csv')
+
+# Extract input (X) and labels (Y) for EEG
+X_eeg_train = eeg_train_data[['EEG.AF3', 'EEG.AF4']].values  # Use only 2 columns as input (2 channels)
+Y_eeg_train = eeg_train_data['Label'].values
+X_eeg_test = eeg_test_data[['EEG.AF3', 'EEG.AF4']].values  # Use only 2 columns as input (2 channels)
+Y_eeg_test = eeg_test_data['Label'].values
+
+# Convert data to PyTorch tensors for EEG
+X_eeg_train_tensor = torch.tensor(X_eeg_train, dtype=torch.float32)
+Y_eeg_train_tensor = torch.tensor(Y_eeg_train, dtype=torch.long)
+X_eeg_test_tensor = torch.tensor(X_eeg_test, dtype=torch.float32)
+Y_eeg_test_tensor = torch.tensor(Y_eeg_test, dtype=torch.long)
+
+# Create DataLoader for EEG training and testing data
+eeg_train_data = TensorDataset(X_eeg_train_tensor, Y_eeg_train_tensor)
+eeg_train_loader = DataLoader(eeg_train_data, batch_size=32, shuffle=True)
+eeg_test_data = TensorDataset(X_eeg_test_tensor, Y_eeg_test_tensor)
+eeg_test_loader = DataLoader(eeg_test_data, batch_size=32, shuffle=False)
+
+# Initialize the EEG model with input_channels and 2 classes
+eeg_model = GestureClassifier(num_classes=2, input_channels=2)  # Two classes: BLINK and EYEBROW_RAISE
+
+
+# print(set(Y_eeg_test))
+
+
+# Define loss and optimizer for EEG
+eeg_criterion = nn.CrossEntropyLoss()
+eeg_optimizer = optim.Adam(eeg_model.parameters(), lr=0.001)
+
+
+# Training loop for EEG
+for epoch in range(num_epochs):
+    eeg_model.train()
+    for inputs, targets in eeg_train_loader:
+        eeg_optimizer.zero_grad()
+        outputs = eeg_model(inputs)
+        loss = eeg_criterion(outputs, targets)
+        loss.backward()
+        eeg_optimizer.step()
+
+# # Initialize eeg_total_samples
+# eeg_total_samples = len(Y_eeg_test)
+
+
+
+# Initialize eeg_total_samples
+eeg_total_samples = len(Y_eeg_test)
+
+# Ensure that eeg_total_samples is not zero
+if eeg_total_samples > 0:
+    eeg_accuracy = eeg_total_correct / eeg_total_samples
+else:
+    eeg_accuracy = 0.0
+
+
+
+# Evaluation loop for EEG
+eeg_model.eval()
+eeg_total_correct = 0
+
+with torch.no_grad():
+    for inputs, targets in eeg_test_loader:
+        outputs = eeg_model(inputs)
+        predicted_classes = torch.argmax(outputs, dim=1)
+        eeg_total_correct += (predicted_classes == targets).sum().item() 
+
+# Calculate accuracy for EEG
+eeg_accuracy = eeg_total_correct / eeg_total_samples
+
+end_time = time.time()  # Record end time
+elapsed_time = end_time - start_time
+
+# Define gesture labels for GYRO and EEG
+gyro_labels = {0: "RIGHT_NOD", 1: "LEFT_NOD"}
+eeg_labels = {0: "BLINK", 1: "EYEBROW_RAISE"}
+
+
+# Predict and print gestures for GYRO
+gyro_model.eval()
+with torch.no_grad():
+    for inputs, _ in gyro_test_loader:
+        outputs = gyro_model(inputs)
+        predicted_classes = torch.argmax(outputs, dim=1)
+        for label in predicted_classes:
+            gesture = gyro_labels[label.item()]
+            print(f"Predicted GYRO Gesture: {gesture}")
+
+# Predict and print gestures for EEG
+eeg_model.eval()
+with torch.no_grad():
+    for inputs, _ in eeg_test_loader:
+        outputs = eeg_model(inputs)
+        predicted_classes = torch.argmax(outputs, dim=1)
+        for label in predicted_classes:
+            gesture = eeg_labels[label.item()]
+            print(f"Predicted EEG Gesture: {gesture}")
+
+# Print results
+print(f"GYRO Testing Accuracy: {gyro_accuracy * 100:.2f}%")
+print(f"EEG Testing Accuracy: {eeg_accuracy * 100:.2f}%")
+print(f"Total Execution Time: {elapsed_time:.2f} seconds")
